@@ -233,7 +233,7 @@ class ResultState extends MusicBeatSubState
     var tallyShit:TallyCounter = new TallyCounter(220, (hStuf * 8) + extraYOffset, params.scoreData.tallies.shit, 0xFFE68C8A);
     ratingGrp.add(tallyShit);
 
-    var tallyMissed:TallyCounter = new TallyCounter(260, (hStuf * 9) + extraYOffset, params.scoreData.tallies.missed, 0xFFC68AE6);
+    var tallyMissed:TallyCounter = new TallyCounter(260, (hStuf * 9) + extraYOffset, PlayState.instance.songMisses, 0xFFC68AE6);
     ratingGrp.add(tallyMissed);
 
     var score:ResultScore = new ResultScore(35, 305, 10, params.scoreData.score);

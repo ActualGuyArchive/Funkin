@@ -204,6 +204,32 @@ class PlayState extends MusicBeatSubState
   public var songScore:Int = 0;
 
   /**
+   * The player's current score.
+   */
+  public var songMisses:Int = 0;
+
+   /**
+   * The metadata of the song.
+   */
+   public var dataText:FlxText;
+
+   /**
+   * The player's ratings.
+   */
+   public var songSicks:Int = 0;
+   public var songGoods:Int = 0;
+   public var songBads:Int = 0;
+   public var songShits:Int = 0;
+
+   /**
+   * The player's ratings.
+   */
+   public var songAccuracy:Float = 0;
+   public var songNotes:Int = 0;
+   public var songHits:Int = 0;
+   public var songAltScore:Int = 0;
+
+  /**
    * Start at this point in the song once the countdown is done.
    * For example, if `startTimestamp` is `30000`, the song will start at the 30 second mark.
    * Used for chart playtesting or practice.
@@ -447,6 +473,11 @@ class PlayState extends MusicBeatSubState
    * The FlxText which displays the current score.
    */
   var scoreText:FlxText;
+
+    /**
+   * The FlxText which displays the player's ratings.
+   */
+  var ratingText:FlxText;
 
   /**
    * The bar which displays the player's health.
@@ -884,6 +915,14 @@ class PlayState extends MusicBeatSubState
 
       health = Constants.HEALTH_STARTING;
       songScore = 0;
+      songMisses = 0;
+      songSicks = 0;
+      songGoods = 0;
+      songBads = 0;
+      songShits = 0;
+      songHits = 0;
+      songAltScore = 0;
+      songAccuracy = 100;
       Highscore.tallies.combo = 0;
       Countdown.performCountdown(currentStageId.startsWith('school'));
 
@@ -1537,13 +1576,29 @@ class PlayState extends MusicBeatSubState
     scoreText = new FlxText(healthBarBG.x + healthBarBG.width - 190, healthBarBG.y + 30, 0, '', 20);
     scoreText.setFormat(Paths.font('vcr.ttf'), 16, FlxColor.WHITE, RIGHT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
     scoreText.scrollFactor.set();
-    scoreText.zIndex = 802;
+    scoreText.zIndex = 855;
     add(scoreText);
+
+    // The rating text below the score text.
+    ratingText = new FlxText(healthBarBG.x + healthBarBG.width - 190, healthBarBG.y + 46, 0, '', 20);
+    ratingText.setFormat(Paths.font('vcr.ttf'), 16, FlxColor.WHITE, RIGHT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+    ratingText.scrollFactor.set();
+    ratingText.zIndex = 855;
+    add(ratingText);
+
+    // The metadata text on the top of the screen.
+    dataText = new FlxText(healthBarBG.x + healthBarBG.width - 190, 16, 0, '', 20);
+    dataText.setFormat(Paths.font('vcr.ttf'), 16, FlxColor.WHITE, RIGHT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+    dataText.scrollFactor.set();
+    dataText.zIndex = 1111;
+    add(dataText);
 
     // Move the health bar to the HUD camera.
     healthBar.cameras = [camHUD];
     healthBarBG.cameras = [camHUD];
     scoreText.cameras = [camHUD];
+    ratingText.cameras = [camHUD];
+    dataText.cameras = [camHUD];
   }
 
   /**
@@ -2018,14 +2073,30 @@ class PlayState extends MusicBeatSubState
   function updateScoreText():Void
   {
     // TODO: Add functionality for modules to update the score text.
+    songNotes = songHits + songMisses;
+    songAccuracy = Math.round((songAltScore / songNotes) * 100) / 100;
+    if (songNotes == 0)
+      {
+        songAccuracy = 100;
+      }
+    dataText.text = '${currentChart.songName} - ${currentChart.songArtist} - ' + currentDifficulty.toTitleCase();
     if (isBotPlayMode)
     {
       scoreText.text = 'Bot Play Enabled';
+      ratingText.text = '...';
     }
     else
     {
-      scoreText.text = 'Score:' + songScore;
+      scoreText.text = 'Score:' + songScore + " - " + "Misses:" + songMisses + " - " + "Accuracy:" + songAccuracy;
+      ratingText.text = 'Sicks:' + songSicks + " - " + "Goods:" + songGoods + " - " + "Bads:" + songBads + " - " + "Shits:" + songShits;
     }
+    scoreText.x = (FlxG.width - scoreText.width) / 2;
+    scoreText.zIndex = 855;
+    ratingText.x = (FlxG.width - ratingText.width) / 2;
+    ratingText.zIndex = 855;
+    dataText.x = (FlxG.width - dataText.width) / 2;
+    dataText.zIndex = 855;
+
   }
 
   /**
@@ -2400,18 +2471,27 @@ class PlayState extends MusicBeatSubState
 
     var score = Scoring.scoreNote(noteDiff, PBOT1);
     var daRating = Scoring.judgeNote(noteDiff, PBOT1);
+    songHits += 1;
 
     var healthChange = 0.0;
     switch (daRating)
     {
       case 'sick':
         healthChange = Constants.HEALTH_SICK_BONUS;
+        songSicks += 1;
+        songAltScore += 100;
       case 'good':
         healthChange = Constants.HEALTH_GOOD_BONUS;
+        songGoods += 1;
+        songAltScore += 75;
       case 'bad':
         healthChange = Constants.HEALTH_BAD_BONUS;
+        songBads += 1;
+        songAltScore += 38;
       case 'shit':
         healthChange = Constants.HEALTH_SHIT_BONUS;
+        songShits += 1;
+        songAltScore += 10;
     }
 
     // Send the note hit event.
@@ -2435,6 +2515,7 @@ class PlayState extends MusicBeatSubState
 
     health += healthChange;
     songScore -= 10;
+    songMisses += 1;
 
     if (!isPracticeMode)
     {
@@ -2513,6 +2594,7 @@ class PlayState extends MusicBeatSubState
 
     health += event.healthChange;
     songScore += event.scoreChange;
+    songMisses += 1;
 
     if (!isPracticeMode)
     {
